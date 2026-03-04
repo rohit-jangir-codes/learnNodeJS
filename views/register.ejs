@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <%- include('partials/navbar') %>
+  <main class="flex-grow flex items-center justify-center px-4 py-12">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-lg p-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Create an account 🏠</h2>
+      <p class="text-gray-500 text-center mb-6">Join HomeStay today</p>
+      <div id="error-msg"   class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 mb-4"></div>
+      <div id="success-msg" class="hidden bg-green-50 border border-green-200 text-green-600 text-sm rounded-lg px-4 py-3 mb-4"></div>
+      <form id="register-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <input type="text" id="name" required placeholder="John Doe" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 transition" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="email" required placeholder="you@example.com" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 transition" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="password" required placeholder="Min. 6 characters" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 transition" />
+        </div>
+        <button type="submit" id="submit-btn" class="w-full bg-rose-500 text-white py-3 rounded-lg font-semibold hover:bg-rose-600 transition">Create Account</button>
+      </form>
+      <p class="text-center text-gray-500 text-sm mt-6">Already have an account? <a href="/login" class="text-rose-500 hover:underline font-medium">Login</a></p>
+    </div>
+  </main>
+  <script>
+    if (localStorage.getItem('token')) window.location.href = '/';
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errorMsg = document.getElementById('error-msg');
+      const successMsg = document.getElementById('success-msg');
+      errorMsg.classList.add('hidden'); successMsg.classList.add('hidden');
+      btn.textContent = 'Creating account...'; btn.disabled = true;
+      const password = document.getElementById('password').value;
+      if (password.length < 6) { errorMsg.textContent = 'Password must be at least 6 characters'; errorMsg.classList.remove('hidden'); btn.textContent = 'Create Account'; btn.disabled = false; return; }
+      try {
+        const res  = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: document.getElementById('name').value, email: document.getElementById('email').value, password }) });
+        const data = await res.json();
+        if (!data.success) { errorMsg.textContent = data.error || 'Registration failed'; errorMsg.classList.remove('hidden'); btn.textContent = 'Create Account'; btn.disabled = false; return; }
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        successMsg.textContent = '✅ Account created! Redirecting...';
+        successMsg.classList.remove('hidden');
+        setTimeout(() => window.location.href = '/', 1200);
+      } catch (err) { errorMsg.textContent = 'Something went wrong.'; errorMsg.classList.remove('hidden'); btn.textContent = 'Create Account'; btn.disabled = false; }
+    });
+  </script>
+</body>
+</html>

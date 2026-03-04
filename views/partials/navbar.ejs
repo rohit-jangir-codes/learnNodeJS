@@ -1,0 +1,30 @@
+<nav class="bg-white shadow-sm border-b border-gray-200">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <a href="/" class="text-2xl font-bold text-rose-500 tracking-tight">🏠 HomeStay</a>
+    <div class="flex items-center gap-4" id="nav-links">
+      <a href="/" class="text-gray-600 hover:text-rose-500 font-medium transition">Homes</a>
+      <a href="/add-home" class="text-gray-600 hover:text-rose-500 font-medium transition" id="nav-add-home">Add Home</a>
+      <a href="/login" class="text-gray-600 hover:text-rose-500 font-medium transition" id="nav-login">Login</a>
+      <a href="/register" class="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition font-medium" id="nav-register">Register</a>
+      <button onclick="logout()" class="hidden text-gray-600 hover:text-rose-500 font-medium transition" id="nav-logout">Logout</button>
+    </div>
+  </div>
+</nav>
+<script>
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  if (token && user) {
+    document.getElementById('nav-login').classList.add('hidden');
+    document.getElementById('nav-register').classList.add('hidden');
+    document.getElementById('nav-logout').classList.remove('hidden');
+    const welcome = document.createElement('span');
+    welcome.className = 'text-gray-700 font-medium';
+    welcome.textContent = '👋 ' + user.name;
+    document.getElementById('nav-links').prepend(welcome);
+  }
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+</script>

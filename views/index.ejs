@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head') %></head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <%- include('partials/navbar') %>
+  <main class="flex-grow max-w-6xl mx-auto w-full px-6 py-10">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-800">Registered Homes</h1>
+      <a href="/add-home" class="bg-rose-500 text-white px-5 py-2 rounded-lg hover:bg-rose-600 transition font-medium">+ Add Home</a>
+    </div>
+    <div id="loading" class="text-center py-20 text-gray-500 text-lg">Loading homes...</div>
+    <div id="empty" class="hidden text-center py-20">
+      <p class="text-gray-400 text-xl">No homes registered yet.</p>
+      <a href="/add-home" class="mt-4 inline-block bg-rose-500 text-white px-6 py-2 rounded-lg hover:bg-rose-600 transition">Add the first one!</a>
+    </div>
+    <div id="error" class="hidden text-center py-20 text-red-500 text-lg"></div>
+    <div id="homes-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </main>
+  <script>
+    async function loadHomes() {
+      try {
+        const res  = await fetch('/api/homes');
+        const data = await res.json();
+        document.getElementById('loading').classList.add('hidden');
+        if (!data.success || data.data.length === 0) {
+          document.getElementById('empty').classList.remove('hidden');
+          return;
+        }
+        const grid = document.getElementById('homes-grid');
+        grid.classList.remove('hidden');
+        data.data.forEach(home => {
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden border border-gray-100';
+          card.innerHTML = `
+            <img src="${home.photo_url || 'https://picsum.photos/seed/' + home.id + '/400/250'}" alt="${home.house_name}" class="w-full h-44 object-cover" onerror="this.src='https://picsum.photos/400/250'" />
+            <div class="p-4 space-y-1">
+              <h3 class="text-lg font-semibold text-gray-800 truncate">${home.house_name}</h3>
+              <p class="text-gray-500 text-sm">📍 ${home.location}</p>
+              <p class="text-gray-700 text-sm font-medium">💰 ₹${home.price_per_night} / night</p>
+              <p class="text-yellow-500 text-sm font-semibold">⭐ ${home.rating} / 5</p>
+            </div>`;
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        document.getElementById('loading').classList.add('hidden');
+        const errEl = document.getElementById('error');
+        errEl.textContent = 'Failed to load homes. Is the server running?';
+        errEl.classList.remove('hidden');
+      }
+    }
+    loadHomes();
+  </script>
+</body>
+</html>

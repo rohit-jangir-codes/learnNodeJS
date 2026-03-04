@@ -1,20 +1,22 @@
-const express = require('express');
-const cors    = require('cors');
-const helmet  = require('helmet');
-const morgan  = require('morgan');
-const rateLimit = require('express-rate-limit');
+const express      = require('express');
+const cors         = require('cors');
+const helmet       = require('helmet');
+const morgan       = require('morgan');
+const path         = require('path');
+const rateLimit    = require('express-rate-limit');
 require('dotenv').config();
 
 const homeRoutes   = require('./routes/homeRoutes');
 const authRoutes   = require('./routes/authRoutes');
+const pageRoutes   = require('./routes/pageRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Rate Limiting ───────────────────────────────────────
+// ── Rate Limiting ────────────────────────────────────────
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,7 +24,7 @@ const limiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
@@ -30,23 +32,34 @@ const authLimiter = rateLimit({
 });
 
 // ── Middleware ──────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ── Routes ──────────────────────────────────────────────
+// ── Static Files ─────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// ── View Engine ──────────────────────────────────────────
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '..', 'views'));
+
+// ── API Routes ───────────────────────────────────────────
 app.use('/api/auth',  authLimiter, authRoutes);
-app.use('/api/homes', limiter, homeRoutes);
+app.use('/api/homes', limiter,     homeRoutes);
+
+// ── Page Routes ──────────────────────────────────────────
+app.use('/', pageRoutes);
 
 // ── Health Check ─────────────────────────────────────────
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ message: '🚀 API is running!' });
 });
 
 // ── 404 Handler ──────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'Route not found' });
+  res.status(404).render('404', { title: 'Page Not Found' });
 });
 
 // ── Global Error Handler ─────────────────────────────────
